@@ -14,7 +14,7 @@ class SistemPrediksiDiabetes:
     def __init__(self, root):
         self.root = root
         self.root.title("Prediksi Risiko Diabetes")
-        self.root.geometry("1300x850")
+        self.root.geometry("1400x900")
         self.root.configure(bg='#f5f5f5')
         
         self.dataset = None
@@ -35,14 +35,14 @@ class SistemPrediksiDiabetes:
         }
         
         self.field_descriptions = {
-            'Pregnancies': 'Berapa kali hamil (0 jika belum pernah)',
-            'Glucose': 'Kadar gula darah puasa (mg/dL)',
-            'BloodPressure': 'Tekanan darah diastolik (mmHg)',
-            'SkinThickness': 'Ketebalan lipatan kulit trisep (mm)',
-            'Insulin': 'Kadar insulin 2 jam setelah makan (μU/mL)',
-            'BMI': 'Berat badan (kg) / [Tinggi (m)]²',
-            'DiabetesPedigreeFunction': 'Skor riwayat diabetes dalam keluarga (0.0-2.5)',
-            'Age': 'Usia pasien dalam tahun'
+            'Pregnancies': 'Berapa kali hamil (0 jika belum pernah/laki-laki)',
+            'Glucose': 'Kadar gula darah puasa',
+            'BloodPressure': 'Tekanan darah diastolik',
+            'SkinThickness': 'Ketebalan lipatan kulit trisep',
+            'Insulin': 'Kadar insulin serum',
+            'BMI': 'Indeks massa tubuh',
+            'DiabetesPedigreeFunction': 'Skor riwayat diabetes keluarga',
+            'Age': 'Usia dalam tahun'
         }
         
         self.field_units = {
@@ -56,6 +56,18 @@ class SistemPrediksiDiabetes:
             'Age': 'tahun'
         }
         
+        # Normal ranges yang masuk akal untuk populasi umum
+        self.normal_ranges = {
+            'Pregnancies': {'min': 0, 'max': 5, 'normal': '0-3', 'example': '2'},
+            'Glucose': {'min': 70, 'max': 125, 'normal': '70-100', 'example': '95'},
+            'BloodPressure': {'min': 60, 'max': 90, 'normal': '70-80', 'example': '75'},
+            'SkinThickness': {'min': 10, 'max': 40, 'normal': '15-30', 'example': '23'},
+            'Insulin': {'min': 15, 'max': 200, 'normal': '16-166', 'example': '80'},
+            'BMI': {'min': 18.5, 'max': 30, 'normal': '18.5-24.9', 'example': '22.5'},
+            'DiabetesPedigreeFunction': {'min': 0.0, 'max': 1.5, 'normal': '0.0-0.5', 'example': '0.3'},
+            'Age': {'min': 21, 'max': 65, 'normal': '21-60', 'example': '35'}
+        }
+        
         self.setup_ui()
         
     def setup_ui(self):
@@ -64,71 +76,76 @@ class SistemPrediksiDiabetes:
         self.create_main_panels()
         
     def create_header(self):
-        header_frame = tk.Frame(self.root, bg='#1e5f8e', height=100)
+        header_frame = tk.Frame(self.root, bg='#1e5f8e', height=80)
         header_frame.pack(fill=tk.X)
         header_frame.pack_propagate(False)
         
         title = tk.Label(header_frame, 
                         text="PREDIKSI RISIKO DIABETES",
-                        font=('Arial', 26, 'bold'), 
+                        font=('Arial', 24, 'bold'), 
                         fg='white', 
                         bg='#1e5f8e')
-        title.pack(pady=20)
+        title.pack(pady=25)
         
     def create_dataset_panel(self):
-        dataset_frame = tk.Frame(self.root, bg='white', relief=tk.RIDGE, borderwidth=1)
+        dataset_frame = tk.Frame(self.root, bg='white', relief=tk.FLAT, borderwidth=0)
         dataset_frame.pack(fill=tk.X, padx=20, pady=(15, 10))
         
         left_section = tk.Frame(dataset_frame, bg='white')
-        left_section.pack(side=tk.LEFT, padx=20, pady=15)
+        left_section.pack(side=tk.LEFT, padx=15, pady=12)
         
-        tk.Label(left_section, text="Dataset:", font=('Arial', 11, 'bold'), bg='white').pack(side=tk.LEFT, padx=(0, 10))
+        tk.Label(left_section, text="Dataset:", font=('Arial', 10, 'bold'), bg='white').pack(side=tk.LEFT, padx=(0, 10))
         
-        self.dataset_info = tk.Label(left_section, text="Belum ada dataset", font=('Arial', 10), fg='#888', bg='white')
+        self.dataset_info = tk.Label(left_section, text="Belum ada dataset", font=('Arial', 10), fg='#666', bg='white')
         self.dataset_info.pack(side=tk.LEFT)
         
         right_section = tk.Frame(dataset_frame, bg='white')
-        right_section.pack(side=tk.RIGHT, padx=20, pady=15)
+        right_section.pack(side=tk.RIGHT, padx=15, pady=12)
         
         tk.Button(right_section,
                  text="Pilih Dataset",
                  command=self.load_dataset,
                  bg='#4a90e2',
                  fg='white',
-                 font=('Arial', 10, 'bold'),
+                 font=('Arial', 9, 'bold'),
                  padx=20,
-                 pady=5).pack(side=tk.LEFT, padx=5)
+                 pady=6,
+                 cursor='hand2').pack(side=tk.LEFT, padx=5)
         
         self.train_button = tk.Button(right_section,
                                      text="Training Model",
                                      command=self.train_model_thread,
                                      bg='#5cb85c',
                                      fg='white',
-                                     font=('Arial', 10, 'bold'),
+                                     font=('Arial', 9, 'bold'),
                                      padx=20,
-                                     pady=5,
-                                     state='disabled')
+                                     pady=6,
+                                     state='disabled',
+                                     cursor='hand2')
         self.train_button.pack(side=tk.LEFT, padx=5)
         
-        self.status_label = tk.Label(right_section, text="", font=('Arial', 9), bg='white')
+        self.status_label = tk.Label(right_section, text="", font=('Arial', 9), bg='white', fg='#666')
         self.status_label.pack(side=tk.LEFT, padx=15)
         
     def create_main_panels(self):
         main_container = tk.Frame(self.root, bg='#f5f5f5')
         main_container.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
         
-        left_panel = tk.Frame(main_container, bg='white', relief=tk.RAISED, borderwidth=1)
+        # LEFT PANEL - Form Input
+        left_panel = tk.Frame(main_container, bg='white', relief=tk.FLAT, borderwidth=0)
         left_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
         
-        panel_header = tk.Frame(left_panel, bg='#f8f9fa')
+        panel_header = tk.Frame(left_panel, bg='#f8f9fa', height=50)
         panel_header.pack(fill=tk.X)
+        panel_header.pack_propagate(False)
         
         tk.Label(panel_header,
                 text="Form Prediksi Risiko Diabetes",
-                font=('Arial', 14, 'bold'),
+                font=('Arial', 13, 'bold'),
                 bg='#f8f9fa').pack(pady=15)
         
-        canvas = tk.Canvas(left_panel, bg='white')
+        # Canvas untuk scrolling
+        canvas = tk.Canvas(left_panel, bg='white', highlightthickness=0)
         scrollbar = ttk.Scrollbar(left_panel, orient="vertical", command=canvas.yview)
         scrollable_frame = tk.Frame(canvas, bg='white')
         
@@ -141,84 +158,91 @@ class SistemPrediksiDiabetes:
         canvas.configure(yscrollcommand=scrollbar.set)
         
         self.input_frame = scrollable_frame
-        canvas.pack(side="left", fill="both", expand=True, padx=20)
+        canvas.pack(side="left", fill="both", expand=True, padx=15, pady=10)
         scrollbar.pack(side="right", fill="y")
         
         self.entries = {}
         self.create_placeholder_form()
         
+        # Button container
         button_container = tk.Frame(left_panel, bg='white')
-        button_container.pack(pady=20)
+        button_container.pack(pady=15)
         
         self.predict_button = tk.Button(button_container,
                                       text="PREDIKSI RISIKO",
                                       command=self.predict,
                                       bg='#ff6b35',
                                       fg='white',
-                                      font=('Arial', 12, 'bold'),
-                                      padx=25,
+                                      font=('Arial', 11, 'bold'),
+                                      padx=30,
                                       pady=10,
-                                      state='disabled')
-        self.predict_button.pack(side=tk.LEFT, padx=10)
+                                      state='disabled',
+                                      cursor='hand2')
+        self.predict_button.pack(side=tk.LEFT, padx=8)
         
         self.reset_button = tk.Button(button_container,
                                      text="RESET FORM",
                                      command=self.reset_form,
-                                     bg='#dc3545',
+                                     bg='#6c757d',
                                      fg='white',
-                                     font=('Arial', 12, 'bold'),
-                                     padx=25,
+                                     font=('Arial', 11, 'bold'),
+                                     padx=30,
                                      pady=10,
-                                     state='disabled')
-        self.reset_button.pack(side=tk.LEFT, padx=10)
+                                     state='disabled',
+                                     cursor='hand2')
+        self.reset_button.pack(side=tk.LEFT, padx=8)
         
-        right_panel = tk.Frame(main_container, bg='white', relief=tk.RAISED, borderwidth=1)
+        # RIGHT PANEL - Results
+        right_panel = tk.Frame(main_container, bg='white', relief=tk.FLAT, borderwidth=0)
         right_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(10, 0))
         
-        result_header = tk.Frame(right_panel, bg='#f8f9fa')
+        result_header = tk.Frame(right_panel, bg='#f8f9fa', height=50)
         result_header.pack(fill=tk.X)
+        result_header.pack_propagate(False)
         
         tk.Label(result_header,
                 text="Hasil Prediksi",
-                font=('Arial', 14, 'bold'),
+                font=('Arial', 13, 'bold'),
                 bg='#f8f9fa').pack(pady=15)
         
+        # Model info
         self.model_info_frame = tk.Frame(right_panel, bg='#e8f4fd')
-        self.model_info_frame.pack(fill=tk.X, padx=20, pady=10)
+        self.model_info_frame.pack(fill=tk.X, padx=15, pady=10)
         self.show_model_info()
         
+        # Result display
         result_container = tk.Frame(right_panel, bg='white')
-        result_container.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+        result_container.pack(fill=tk.BOTH, expand=True, padx=15, pady=(0, 15))
         
         self.result_display = tk.Text(result_container,
                                      wrap=tk.WORD,
-                                     font=('Consolas', 10),
-                                     bg='#f9f9f9',
+                                     font=('Consolas', 9),
+                                     bg='#fafafa',
                                      relief=tk.FLAT,
-                                     borderwidth=1)
+                                     borderwidth=0,
+                                     padx=10,
+                                     pady=10)
         self.result_display.pack(fill=tk.BOTH, expand=True)
         
-        scrollbar = ttk.Scrollbar(self.result_display)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.result_display.config(yscrollcommand=scrollbar.set)
-        scrollbar.config(command=self.result_display.yview)
+        result_scrollbar = ttk.Scrollbar(self.result_display)
+        result_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.result_display.config(yscrollcommand=result_scrollbar.set)
+        result_scrollbar.config(command=self.result_display.yview)
         
         self.show_welcome_message()
-        
         
     def create_placeholder_form(self):
         info_label = tk.Label(self.input_frame,
                             text="Silakan pilih dataset dan training model terlebih dahulu",
-                            font=('Arial', 11),
-                            fg='#888',
+                            font=('Arial', 10),
+                            fg='#999',
                             bg='white')
-        info_label.pack(pady=50)
+        info_label.pack(pady=80)
         
     def load_dataset(self):
         file_path = filedialog.askopenfilename(
             title="Pilih File Dataset CSV",
-            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
-            initialdir="/mnt/user-data/uploads"
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
         )
         
         if file_path:
@@ -233,7 +257,7 @@ class SistemPrediksiDiabetes:
                 
                 filename = os.path.basename(file_path)
                 data_info = f"{filename} | {len(self.dataset)} data | {len(self.feature_columns)} fitur"
-                self.dataset_info.config(text=data_info, fg='black')
+                self.dataset_info.config(text=data_info, fg='#333')
                 
                 outcome_counts = self.dataset['Outcome'].value_counts()
                 non_diabetes = outcome_counts.get(0, 0)
@@ -246,12 +270,12 @@ class SistemPrediksiDiabetes:
                 info_message += f"Distribusi Data:\n"
                 info_message += f"• Non-Diabetes: {non_diabetes} ({non_diabetes/len(self.dataset)*100:.1f}%)\n"
                 info_message += f"• Diabetes: {diabetes} ({diabetes/len(self.dataset)*100:.1f}%)\n\n"
-                info_message += f"Fitur yang tersedia:\n{', '.join(self.feature_columns)}"
+                info_message += f"Fitur: {', '.join(self.feature_columns)}"
                 
                 messagebox.showinfo("Dataset Dimuat", info_message)
                 
                 self.train_button.config(state='normal')
-                self.status_label.config(text="Dataset siap untuk training", fg='blue')
+                self.status_label.config(text="Dataset siap untuk training", fg='#5cb85c')
                 
                 self.create_input_form()
                 
@@ -264,111 +288,116 @@ class SistemPrediksiDiabetes:
         
         self.entries = {}
         
+        # Title
         title_frame = tk.Frame(self.input_frame, bg='white')
-        title_frame.pack(pady=(10, 20))
+        title_frame.pack(pady=(5, 15))
         
         tk.Label(title_frame,
                 text="Masukkan Data Pasien",
-                font=('Arial', 13, 'bold'),
+                font=('Arial', 11, 'bold'),
                 bg='white').pack()
         
         tk.Label(title_frame,
-                text="Isi semua field dengan data medis pasien",
+                text="Isi semua field dengan data medis",
                 font=('Arial', 9),
                 fg='#666',
                 bg='white').pack()
         
+        # Input fields
         for column in self.feature_columns:
-            field_frame = tk.Frame(self.input_frame, bg='white', relief=tk.GROOVE, borderwidth=1)
-            field_frame.pack(fill=tk.X, padx=10, pady=8)
+            field_frame = tk.Frame(self.input_frame, bg='#f8f9fa', relief=tk.FLAT)
+            field_frame.pack(fill=tk.X, padx=5, pady=6)
             
-            label_frame = tk.Frame(field_frame, bg='white')
-            label_frame.pack(fill=tk.X, padx=10, pady=(10, 5))
+            # Label section
+            label_container = tk.Frame(field_frame, bg='#f8f9fa')
+            label_container.pack(fill=tk.X, padx=12, pady=(8, 4))
             
-            if column in self.label_mapping:
-                label_text = self.label_mapping[column]
-            else:
-                label_text = column
+            label_text = self.label_mapping.get(column, column)
             
-            main_label = tk.Label(label_frame,
-                                 text=f"{label_text}:",
-                                 font=('Arial', 11, 'bold'),
-                                 bg='white')
-            main_label.pack(anchor='w')
+            main_label = tk.Label(label_container,
+                                 text=f"{label_text}",
+                                 font=('Arial', 10, 'bold'),
+                                 bg='#f8f9fa',
+                                 anchor='w')
+            main_label.pack(side=tk.TOP, anchor='w')
             
             if column in self.field_descriptions:
-                desc_label = tk.Label(label_frame,
+                desc_label = tk.Label(label_container,
                                     text=self.field_descriptions[column],
-                                    font=('Arial', 9),
-                                    fg='#555',
-                                    bg='white')
-                desc_label.pack(anchor='w')
+                                    font=('Arial', 8),
+                                    fg='#666',
+                                    bg='#f8f9fa',
+                                    anchor='w')
+                desc_label.pack(side=tk.TOP, anchor='w')
             
-            input_frame = tk.Frame(field_frame, bg='white')
-            input_frame.pack(fill=tk.X, padx=10, pady=(0, 10))
+            # Input section
+            input_container = tk.Frame(field_frame, bg='#f8f9fa')
+            input_container.pack(fill=tk.X, padx=12, pady=(0, 8))
             
-            entry = tk.Entry(input_frame,
-                           width=20,
-                           font=('Arial', 11),
+            entry = tk.Entry(input_container,
+                           width=15,
+                           font=('Arial', 10),
                            relief=tk.SOLID,
                            borderwidth=1)
-            entry.pack(side=tk.LEFT)
+            entry.pack(side=tk.LEFT, ipady=3)
             
+            # Unit label
             if column in self.field_units:
-                unit_label = tk.Label(input_frame,
+                unit_label = tk.Label(input_container,
                                     text=self.field_units[column],
-                                    font=('Arial', 10),
+                                    font=('Arial', 9),
                                     fg='#666',
-                                    bg='white')
-                unit_label.pack(side=tk.LEFT, padx=(10, 0))
+                                    bg='#f8f9fa')
+                unit_label.pack(side=tk.LEFT, padx=(8, 12))
             
-            if column in self.dataset.columns:
-                min_val = self.dataset[column].min()
-                max_val = self.dataset[column].max()
-                mean_val = self.dataset[column].mean()
+            # Normal range
+            if column in self.normal_ranges:
+                range_info = self.normal_ranges[column]
+                range_text = f"Normal: {range_info['normal']}"
                 
-                range_label = tk.Label(input_frame,
-                                     text=f"(Normal: {min_val:.1f}-{max_val:.1f}, Rata-rata: {mean_val:.1f})",
-                                     font=('Arial', 9),
-                                     fg='#888',
-                                     bg='white')
-                range_label.pack(side=tk.LEFT, padx=(15, 0))
+                range_label = tk.Label(input_container,
+                                     text=range_text,
+                                     font=('Arial', 8),
+                                     fg='#28a745',
+                                     bg='#f8f9fa')
+                range_label.pack(side=tk.LEFT)
             
             self.entries[column] = entry
             
+            # Example hints
             if column == 'Pregnancies':
                 entry.insert(0, "0")
             elif column == 'Glucose':
-                example_frame = tk.Frame(field_frame, bg='#f0f8ff')
-                example_frame.pack(fill=tk.X, padx=10, pady=(0, 10))
-                tk.Label(example_frame,
-                       text="💡 Contoh: 110 (normal: <100, prediabetes: 100-125, diabetes: >125)",
+                hint_frame = tk.Frame(field_frame, bg='#e7f3ff')
+                hint_frame.pack(fill=tk.X, padx=12, pady=(0, 8))
+                tk.Label(hint_frame,
+                       text="💡 Normal <100 | Prediabetes 100-125 | Diabetes >125",
                        font=('Arial', 8),
-                       fg='#0066cc',
-                       bg='#f0f8ff').pack(padx=5, pady=3)
+                       fg='#004085',
+                       bg='#e7f3ff').pack(anchor='w', padx=6, pady=3)
             elif column == 'BMI':
-                example_frame = tk.Frame(field_frame, bg='#f0f8ff')
-                example_frame.pack(fill=tk.X, padx=10, pady=(0, 10))
-                tk.Label(example_frame,
-                       text="💡 Cara hitung: Berat(kg)÷[Tinggi(m)×Tinggi(m)]. Contoh: 70kg, 170cm → 70÷(1.7×1.7)=24.2",
+                hint_frame = tk.Frame(field_frame, bg='#e7f3ff')
+                hint_frame.pack(fill=tk.X, padx=12, pady=(0, 8))
+                tk.Label(hint_frame,
+                       text="💡 Rumus: Berat(kg) ÷ [Tinggi(m)]². Contoh: 70kg, 170cm → 70÷1.7²=24.2",
                        font=('Arial', 8),
-                       fg='#0066cc',
-                       bg='#f0f8ff').pack(padx=5, pady=3)
+                       fg='#004085',
+                       bg='#e7f3ff').pack(anchor='w', padx=6, pady=3)
             elif column == 'DiabetesPedigreeFunction':
-                example_frame = tk.Frame(field_frame, bg='#f0f8ff')
-                example_frame.pack(fill=tk.X, padx=10, pady=(0, 10))
-                tk.Label(example_frame,
-                       text="💡 Skor 0.0-2.5 (0=tidak ada riwayat, >1=riwayat kuat)",
+                hint_frame = tk.Frame(field_frame, bg='#e7f3ff')
+                hint_frame.pack(fill=tk.X, padx=12, pady=(0, 8))
+                tk.Label(hint_frame,
+                       text="💡 Rentang 0.0-2.5 (0=tidak ada riwayat, >1.0=riwayat kuat diabetes keluarga)",
                        font=('Arial', 8),
-                       fg='#0066cc',
-                       bg='#f0f8ff').pack(padx=5, pady=3)
+                       fg='#004085',
+                       bg='#e7f3ff').pack(anchor='w', padx=6, pady=3)
                        
     def train_model_thread(self):
         if self.dataset is None:
             messagebox.showerror("Error", "Pilih dataset terlebih dahulu")
             return
         
-        self.status_label.config(text="Training model...", fg='orange')
+        self.status_label.config(text="Training model...", fg='#ff6b35')
         self.train_button.config(state='disabled')
         
         thread = threading.Thread(target=self.train_model)
@@ -376,6 +405,7 @@ class SistemPrediksiDiabetes:
         
     def train_model(self):
         try:
+            # Replace zeros with median
             zero_columns = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
             for col in zero_columns:
                 if col in self.dataset.columns:
@@ -422,7 +452,7 @@ class SistemPrediksiDiabetes:
             self.root.after(0, lambda: self.on_training_error(str(e)))
             
     def on_training_complete(self):
-        self.status_label.config(text=f"Model berhasil (Akurasi: {self.accuracy:.1%})", fg='green')
+        self.status_label.config(text=f"Model berhasil (Akurasi: {self.accuracy:.1%})", fg='#28a745')
         self.train_button.config(state='normal')
         self.predict_button.config(state='normal')
         self.reset_button.config(state='normal')
@@ -443,7 +473,7 @@ class SistemPrediksiDiabetes:
         messagebox.showinfo("Training Berhasil", message)
         
     def on_training_error(self, error_msg):
-        self.status_label.config(text="Training gagal", fg='red')
+        self.status_label.config(text="Training gagal", fg='#dc3545')
         self.train_button.config(state='normal')
         messagebox.showerror("Error Training", f"Gagal melatih model:\n{error_msg}")
         
@@ -454,17 +484,17 @@ class SistemPrediksiDiabetes:
         if not self.model_trained:
             tk.Label(self.model_info_frame,
                    text="Model belum ditraining",
-                   font=('Arial', 10),
-                   fg='#888',
-                   bg='#e8f4fd').pack(pady=15)
+                   font=('Arial', 9),
+                   fg='#999',
+                   bg='#e8f4fd').pack(pady=12)
         else:
             tk.Label(self.model_info_frame,
                    text="Model Information",
-                   font=('Arial', 11, 'bold'),
-                   bg='#e8f4fd').pack(pady=(10, 5))
+                   font=('Arial', 10, 'bold'),
+                   bg='#e8f4fd').pack(pady=(8, 5))
             
             info_grid = tk.Frame(self.model_info_frame, bg='#e8f4fd')
-            info_grid.pack(pady=(0, 10))
+            info_grid.pack(pady=(0, 8))
             
             metrics = [
                 ("K-Optimal", f"{self.k_optimal}"),
@@ -480,17 +510,18 @@ class SistemPrediksiDiabetes:
                 col = i % 3
                 
                 frame = tk.Frame(info_grid, bg='#e8f4fd')
-                frame.grid(row=row, column=col, padx=10, pady=3)
+                frame.grid(row=row, column=col, padx=15, pady=2)
                 
                 tk.Label(frame,
                        text=f"{label}:",
-                       font=('Arial', 9),
+                       font=('Arial', 8),
+                       fg='#555',
                        bg='#e8f4fd').pack(side=tk.LEFT)
                 
                 tk.Label(frame,
                        text=value,
-                       font=('Arial', 9, 'bold'),
-                       bg='#e8f4fd').pack(side=tk.LEFT, padx=(5, 0))
+                       font=('Arial', 8, 'bold'),
+                       bg='#e8f4fd').pack(side=tk.LEFT, padx=(4, 0))
                        
     def predict(self):
         if not self.model_trained:
@@ -513,47 +544,42 @@ class SistemPrediksiDiabetes:
             prediction = self.model.predict(X_scaled)[0]
             probability = self.model.predict_proba(X_scaled)[0]
             
-            neighbors = self.model.kneighbors(X_scaled, n_neighbors=self.k_optimal, return_distance=True)
-            avg_distance = neighbors[0][0].mean()
-            
-            self.display_prediction_result(input_data, prediction, probability, avg_distance)
+            self.display_prediction_result(input_data, prediction, probability)
             
         except ValueError as e:
             messagebox.showerror("Error", f"Input tidak valid. Pastikan semua input berupa angka.\n{str(e)}")
             
-    def display_prediction_result(self, input_data, prediction, probability, avg_distance):
+    def display_prediction_result(self, input_data, prediction, probability):
         self.result_display.delete(1.0, tk.END)
         
         current_time = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
         
-        self.result_display.insert(tk.END, "="*60 + "\n")
-        self.result_display.insert(tk.END, "         HASIL PREDIKSI RISIKO DIABETES\n")
-        self.result_display.insert(tk.END, "="*60 + "\n\n")
+        self.result_display.insert(tk.END, "="*65 + "\n")
+        self.result_display.insert(tk.END, "           HASIL PREDIKSI RISIKO DIABETES\n")
+        self.result_display.insert(tk.END, "="*65 + "\n\n")
         
         self.result_display.insert(tk.END, f"Waktu Prediksi: {current_time}\n")
         self.result_display.insert(tk.END, f"Model: K-Nearest Neighbors (K={self.k_optimal})\n\n")
         
-        self.result_display.insert(tk.END, "-"*60 + "\n")
+        self.result_display.insert(tk.END, "-"*65 + "\n")
         self.result_display.insert(tk.END, "DATA PASIEN:\n")
-        self.result_display.insert(tk.END, "-"*60 + "\n")
+        self.result_display.insert(tk.END, "-"*65 + "\n")
         
         for column, value in input_data.items():
             label = self.label_mapping.get(column, column)
             unit = self.field_units.get(column, '')
-            self.result_display.insert(tk.END, f"{label:30s}: {value:>10.2f} {unit}\n")
+            self.result_display.insert(tk.END, f"{label:32s}: {value:>8.2f} {unit}\n")
         
-        self.result_display.insert(tk.END, "\n" + "-"*60 + "\n")
+        self.result_display.insert(tk.END, "\n" + "-"*65 + "\n")
         self.result_display.insert(tk.END, "HASIL PREDIKSI:\n")
-        self.result_display.insert(tk.END, "-"*60 + "\n\n")
+        self.result_display.insert(tk.END, "-"*65 + "\n\n")
         
         risk_prob = probability[1] * 100
         
         if prediction == 1:
             status = "BERISIKO DIABETES"
-            status_color = "#ff4444"
         else:
             status = "TIDAK BERISIKO DIABETES"
-            status_color = "#44ff44"
             
         self.result_display.insert(tk.END, f"Status: {status}\n\n")
         
@@ -572,95 +598,103 @@ class SistemPrediksiDiabetes:
         
         if risk_prob >= 75:
             kategori = "SANGAT TINGGI"
-            warna_kategori = "Merah"
+            warna = "Merah"
         elif risk_prob >= 50:
             kategori = "TINGGI"
-            warna_kategori = "Orange"
+            warna = "Orange"
         elif risk_prob >= 25:
             kategori = "SEDANG"
-            warna_kategori = "Kuning"
+            warna = "Kuning"
         else:
             kategori = "RENDAH"
-            warna_kategori = "Hijau"
+            warna = "Hijau"
             
-        self.result_display.insert(tk.END, f"Tingkat Risiko: {kategori} ({warna_kategori})\n\n")
+        self.result_display.insert(tk.END, f"Tingkat Risiko: {kategori} ({warna})\n\n")
         
-        self.result_display.insert(tk.END, "-"*60 + "\n")
+        self.result_display.insert(tk.END, "-"*65 + "\n")
         self.result_display.insert(tk.END, "INTERPRETASI & REKOMENDASI:\n")
-        self.result_display.insert(tk.END, "-"*60 + "\n\n")
+        self.result_display.insert(tk.END, "-"*65 + "\n\n")
         
         if risk_prob >= 75:
             interpretasi = """RISIKO SANGAT TINGGI:
-• Segera lakukan konsultasi dengan dokter spesialis
-• Pemeriksaan gula darah komprehensif sangat mendesak
+• Segera konsultasi dengan dokter spesialis
+• Pemeriksaan gula darah komprehensif mendesak
 • Perubahan gaya hidup harus segera dimulai
-• Monitor gula darah secara rutin (harian)
-• Evaluasi komplikasi diabetes"""
+• Monitor gula darah rutin (harian)"""
         elif risk_prob >= 50:
             interpretasi = """RISIKO TINGGI:
 • Konsultasi dengan dokter dalam waktu dekat
 • Lakukan tes HbA1c dan glukosa puasa
 • Mulai program diet dan olahraga
-• Monitor gula darah mingguan
-• Pertimbangkan konsultasi nutrisionis"""
+• Monitor gula darah mingguan"""
         elif risk_prob >= 25:
             interpretasi = """RISIKO SEDANG:
-• Pemeriksaan kesehatan rutin setiap 3-6 bulan
+• Pemeriksaan kesehatan rutin tiap 3-6 bulan
 • Perhatikan pola makan dan aktivitas fisik
 • Monitor berat badan dan BMI
-• Tes gula darah berkala
-• Edukasi pencegahan diabetes"""
+• Tes gula darah berkala"""
         else:
             interpretasi = """RISIKO RENDAH:
 • Pertahankan gaya hidup sehat
 • Pemeriksaan tahunan tetap dianjurkan
 • Jaga berat badan ideal
-• Olahraga teratur minimal 150 menit/minggu
-• Diet seimbang dan bergizi"""
+• Olahraga teratur min 150 menit/minggu"""
             
         self.result_display.insert(tk.END, interpretasi + "\n\n")
         
-        self.result_display.insert(tk.END, "-"*60 + "\n")
-        self.result_display.insert(tk.END, "FAKTOR RISIKO YANG PERLU DIPERHATIKAN:\n")
-        self.result_display.insert(tk.END, "-"*60 + "\n")
+        self.result_display.insert(tk.END, "-"*65 + "\n")
+        self.result_display.insert(tk.END, "FAKTOR RISIKO PERLU DIPERHATIKAN:\n")
+        self.result_display.insert(tk.END, "-"*65 + "\n")
         
+        warnings = []
         if 'BMI' in input_data and input_data['BMI'] > 25:
-            self.result_display.insert(tk.END, "• BMI tinggi - pertimbangkan penurunan berat badan\n")
+            warnings.append("• BMI tinggi - pertimbangkan penurunan berat badan")
         if 'Glucose' in input_data and input_data['Glucose'] > 100:
-            self.result_display.insert(tk.END, "• Glukosa tinggi - perlu monitoring ketat\n")
+            warnings.append("• Glukosa tinggi - perlu monitoring ketat")
         if 'Age' in input_data and input_data['Age'] > 45:
-            self.result_display.insert(tk.END, "• Usia >45 tahun - risiko meningkat\n")
+            warnings.append("• Usia >45 tahun - risiko meningkat")
         if 'BloodPressure' in input_data and input_data['BloodPressure'] > 80:
-            self.result_display.insert(tk.END, "• Tekanan darah perlu diperhatikan\n")
+            warnings.append("• Tekanan darah perlu diperhatikan")
+        if 'Pregnancies' in input_data and input_data['Pregnancies'] > 3:
+            warnings.append("• Riwayat kehamilan banyak - risiko lebih tinggi")
             
-        self.result_display.insert(tk.END, "\n" + "="*60 + "\n")
-        self.result_display.insert(tk.END, "CATATAN PENTING:\n")
+        if warnings:
+            for w in warnings:
+                self.result_display.insert(tk.END, w + "\n")
+        else:
+            self.result_display.insert(tk.END, "• Tidak ada faktor risiko signifikan terdeteksi\n")
+            
+        self.result_display.insert(tk.END, "\n" + "="*65 + "\n")
+        self.result_display.insert(tk.END, "CATATAN:\n")
         self.result_display.insert(tk.END, "Hasil prediksi ini berdasarkan model machine learning\n")
-        self.result_display.insert(tk.END, "dan bukan diagnosis medis definitif. Konsultasikan\n")
-        self.result_display.insert(tk.END, "dengan tenaga medis untuk diagnosis yang akurat.\n")
-        self.result_display.insert(tk.END, "="*60 + "\n")
+        self.result_display.insert(tk.END, "dan BUKAN diagnosis medis definitif. Konsultasikan\n")
+        self.result_display.insert(tk.END, "dengan tenaga medis untuk diagnosis akurat.\n")
+        self.result_display.insert(tk.END, "="*65 + "\n")
         
     def show_welcome_message(self):
-        self.result_display.insert(tk.END, "="*60 + "\n")
-        self.result_display.insert(tk.END, "    SELAMAT DATANG DI SISTEM PREDIKSI DIABETES\n")
-        self.result_display.insert(tk.END, "="*60 + "\n\n")
+        self.result_display.insert(tk.END, "="*65 + "\n")
+        self.result_display.insert(tk.END, "     SELAMAT DATANG DI SISTEM PREDIKSI DIABETES\n")
+        self.result_display.insert(tk.END, "="*65 + "\n\n")
         
         self.result_display.insert(tk.END, "Sistem ini menggunakan algoritma K-Nearest Neighbors\n")
-        self.result_display.insert(tk.END, "untuk memprediksi risiko diabetes berdasarkan data klinis.\n\n")
+        self.result_display.insert(tk.END, "untuk prediksi risiko diabetes berdasarkan data klinis.\n\n")
         
         self.result_display.insert(tk.END, "CARA PENGGUNAAN:\n")
-        self.result_display.insert(tk.END, "-"*40 + "\n")
+        self.result_display.insert(tk.END, "-"*45 + "\n")
         self.result_display.insert(tk.END, "1. Klik 'Pilih Dataset' untuk memuat data CSV\n")
         self.result_display.insert(tk.END, "2. Klik 'Training Model' untuk melatih model\n")
         self.result_display.insert(tk.END, "3. Isi form dengan data pasien\n")
         self.result_display.insert(tk.END, "4. Klik 'PREDIKSI RISIKO' untuk hasil\n")
-        self.result_display.insert(tk.END, "5. Gunakan 'RESET FORM' untuk data baru\n\n")
+        self.result_display.insert(tk.END, "5. Gunakan 'RESET FORM' untuk input baru\n\n")
         
-        self.result_display.insert(tk.END, "="*60 + "\n")
+        self.result_display.insert(tk.END, "="*65 + "\n")
         
     def reset_form(self):
         for entry in self.entries.values():
             entry.delete(0, tk.END)
+        
+        if 'Pregnancies' in self.entries:
+            self.entries['Pregnancies'].insert(0, "0")
         
         self.show_welcome_message()
         
