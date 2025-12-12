@@ -56,7 +56,6 @@ class SistemPrediksiDiabetes:
             'Age': 'tahun'
         }
         
-        # Normal ranges yang masuk akal untuk populasi umum
         self.normal_ranges = {
             'Pregnancies': {'min': 0, 'max': 5, 'normal': '0-3', 'example': '2'},
             'Glucose': {'min': 70, 'max': 125, 'normal': '70-100', 'example': '95'},
@@ -131,7 +130,6 @@ class SistemPrediksiDiabetes:
         main_container = tk.Frame(self.root, bg='#f5f5f5')
         main_container.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
         
-        # LEFT PANEL - Form Input
         left_panel = tk.Frame(main_container, bg='white', relief=tk.FLAT, borderwidth=0)
         left_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
         
@@ -144,7 +142,6 @@ class SistemPrediksiDiabetes:
                 font=('Arial', 13, 'bold'),
                 bg='#f8f9fa').pack(pady=15)
         
-        # Canvas untuk scrolling
         canvas = tk.Canvas(left_panel, bg='white', highlightthickness=0)
         scrollbar = ttk.Scrollbar(left_panel, orient="vertical", command=canvas.yview)
         scrollable_frame = tk.Frame(canvas, bg='white')
@@ -164,7 +161,6 @@ class SistemPrediksiDiabetes:
         self.entries = {}
         self.create_placeholder_form()
         
-        # Button container
         button_container = tk.Frame(left_panel, bg='white')
         button_container.pack(pady=15)
         
@@ -192,7 +188,6 @@ class SistemPrediksiDiabetes:
                                      cursor='hand2')
         self.reset_button.pack(side=tk.LEFT, padx=8)
         
-        # RIGHT PANEL - Results
         right_panel = tk.Frame(main_container, bg='white', relief=tk.FLAT, borderwidth=0)
         right_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(10, 0))
         
@@ -205,12 +200,10 @@ class SistemPrediksiDiabetes:
                 font=('Arial', 13, 'bold'),
                 bg='#f8f9fa').pack(pady=15)
         
-        # Model info
         self.model_info_frame = tk.Frame(right_panel, bg='#e8f4fd')
         self.model_info_frame.pack(fill=tk.X, padx=15, pady=10)
         self.show_model_info()
         
-        # Result display
         result_container = tk.Frame(right_panel, bg='white')
         result_container.pack(fill=tk.BOTH, expand=True, padx=15, pady=(0, 15))
         
@@ -288,7 +281,6 @@ class SistemPrediksiDiabetes:
         
         self.entries = {}
         
-        # Title
         title_frame = tk.Frame(self.input_frame, bg='white')
         title_frame.pack(pady=(5, 15))
         
@@ -303,12 +295,10 @@ class SistemPrediksiDiabetes:
                 fg='#666',
                 bg='white').pack()
         
-        # Input fields
         for column in self.feature_columns:
             field_frame = tk.Frame(self.input_frame, bg='#f8f9fa', relief=tk.FLAT)
             field_frame.pack(fill=tk.X, padx=5, pady=6)
             
-            # Label section
             label_container = tk.Frame(field_frame, bg='#f8f9fa')
             label_container.pack(fill=tk.X, padx=12, pady=(8, 4))
             
@@ -330,7 +320,6 @@ class SistemPrediksiDiabetes:
                                     anchor='w')
                 desc_label.pack(side=tk.TOP, anchor='w')
             
-            # Input section
             input_container = tk.Frame(field_frame, bg='#f8f9fa')
             input_container.pack(fill=tk.X, padx=12, pady=(0, 8))
             
@@ -340,8 +329,7 @@ class SistemPrediksiDiabetes:
                            relief=tk.SOLID,
                            borderwidth=1)
             entry.pack(side=tk.LEFT, ipady=3)
-            
-            # Unit label
+
             if column in self.field_units:
                 unit_label = tk.Label(input_container,
                                     text=self.field_units[column],
@@ -350,7 +338,6 @@ class SistemPrediksiDiabetes:
                                     bg='#f8f9fa')
                 unit_label.pack(side=tk.LEFT, padx=(8, 12))
             
-            # Normal range
             if column in self.normal_ranges:
                 range_info = self.normal_ranges[column]
                 range_text = f"Normal: {range_info['normal']}"
@@ -364,7 +351,6 @@ class SistemPrediksiDiabetes:
             
             self.entries[column] = entry
             
-            # Example hints
             if column == 'Pregnancies':
                 entry.insert(0, "0")
             elif column == 'Glucose':
@@ -405,7 +391,6 @@ class SistemPrediksiDiabetes:
         
     def train_model(self):
         try:
-            # Replace zeros with median
             zero_columns = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
             for col in zero_columns:
                 if col in self.dataset.columns:
