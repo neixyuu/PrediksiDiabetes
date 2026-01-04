@@ -9,6 +9,10 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import threading
 import os
 from datetime import datetime
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import seaborn as sns
+
 
 class SistemPrediksiDiabetes:
     def __init__(self, root):
@@ -35,7 +39,7 @@ class SistemPrediksiDiabetes:
         }
         
         self.field_descriptions = {
-            'Pregnancies': 'Berapa kali hamil (0 jika belum pernah/laki-laki)',
+            'Pregnancies': 'Berapa kali hamil (0 jika belum pernah / laki-laki)',
             'Glucose': 'Kadar gula darah puasa',
             'BloodPressure': 'Tekanan darah diastolik',
             'SkinThickness': 'Ketebalan lipatan kulit trisep',
@@ -204,6 +208,22 @@ class SistemPrediksiDiabetes:
         self.model_info_frame.pack(fill=tk.X, padx=15, pady=10)
         self.show_model_info()
         
+        #bagian confusion matrix
+        cm_button_frame = tk.Frame(right_panel, bg='white')
+        cm_button_frame.pack(fill=tk.X, padx=15, pady=(0, 10))
+        
+        self.cm_button = tk.Button(cm_button_frame,
+                                  text="Tampilkan Confusion Matrix",
+                                  command=self.show_confusion_matrix,
+                                  bg='#17a2b8',
+                                  fg='white',
+                                  font=('Arial', 10, 'bold'),
+                                  padx=20,
+                                  pady=8,
+                                  state='disabled',
+                                  cursor='hand2')
+        self.cm_button.pack()
+        
         result_container = tk.Frame(right_panel, bg='white')
         result_container.pack(fill=tk.BOTH, expand=True, padx=15, pady=(0, 15))
         
@@ -232,6 +252,7 @@ class SistemPrediksiDiabetes:
                             bg='white')
         info_label.pack(pady=80)
         
+        # bagian dimana dataset di load
     def load_dataset(self):
         file_path = filedialog.askopenfilename(
             title="Pilih File Dataset CSV",
@@ -256,6 +277,7 @@ class SistemPrediksiDiabetes:
                 non_diabetes = outcome_counts.get(0, 0)
                 diabetes = outcome_counts.get(1, 0)
                 
+                # output informasi dataset
                 info_message = f"Dataset Berhasil Dimuat!\n\n"
                 info_message += f"File: {filename}\n"
                 info_message += f"Total Data: {len(self.dataset)}\n"
@@ -313,11 +335,11 @@ class SistemPrediksiDiabetes:
             
             if column in self.field_descriptions:
                 desc_label = tk.Label(label_container,
-                                    text=self.field_descriptions[column],
-                                    font=('Arial', 8),
-                                    fg='#666',
-                                    bg='#f8f9fa',
-                                    anchor='w')
+                                     text=self.field_descriptions[column],
+                                     font=('Arial', 8),
+                                     fg='#666',
+                                     bg='#f8f9fa',
+                                     anchor='w')
                 desc_label.pack(side=tk.TOP, anchor='w')
             
             input_container = tk.Frame(field_frame, bg='#f8f9fa')
@@ -332,10 +354,10 @@ class SistemPrediksiDiabetes:
 
             if column in self.field_units:
                 unit_label = tk.Label(input_container,
-                                    text=self.field_units[column],
-                                    font=('Arial', 9),
-                                    fg='#666',
-                                    bg='#f8f9fa')
+                                     text=self.field_units[column],
+                                     font=('Arial', 9),
+                                     fg='#666',
+                                     bg='#f8f9fa')
                 unit_label.pack(side=tk.LEFT, padx=(8, 12))
             
             if column in self.normal_ranges:
@@ -357,90 +379,130 @@ class SistemPrediksiDiabetes:
                 hint_frame = tk.Frame(field_frame, bg='#e7f3ff')
                 hint_frame.pack(fill=tk.X, padx=12, pady=(0, 8))
                 tk.Label(hint_frame,
-                       text="💡 Normal <100 | Prediabetes 100-125 | Diabetes >125",
-                       font=('Arial', 8),
-                       fg='#004085',
-                       bg='#e7f3ff').pack(anchor='w', padx=6, pady=3)
+                         text="Normal <100 | Prediabetes 100-125 | Diabetes >125",
+                         font=('Arial', 8),
+                         fg='#004085',
+                         bg='#e7f3ff').pack(anchor='w', padx=6, pady=3)
             elif column == 'BMI':
                 hint_frame = tk.Frame(field_frame, bg='#e7f3ff')
                 hint_frame.pack(fill=tk.X, padx=12, pady=(0, 8))
                 tk.Label(hint_frame,
-                       text="💡 Rumus: Berat(kg) ÷ [Tinggi(m)]². Contoh: 70kg, 170cm → 70÷1.7²=24.2",
-                       font=('Arial', 8),
-                       fg='#004085',
-                       bg='#e7f3ff').pack(anchor='w', padx=6, pady=3)
+                         text="Rumus: Berat(kg) ÷ [Tinggi(m)]². Contoh: 70kg, 170cm → 70÷1.7²=24.2",
+                         font=('Arial', 8),
+                         fg='#004085',
+                         bg='#e7f3ff').pack(anchor='w', padx=6, pady=3)
+            elif column == 'SkinThickness':
+                hint_frame = tk.Frame(field_frame, bg='#e7f3ff')
+                hint_frame.pack(fill=tk.X, padx=12, pady=(0, 8))
+                tk.Label(hint_frame,
+                         text="Diukur di trisep (lengan atas belakang) menggunakan kaliper( Cukup di isi 29 jika tidak tahu )",
+                         font=('Arial', 8),
+                         fg='#004085',
+                         bg='#e7f3ff').pack(anchor='w', padx=6, pady=3)
             elif column == 'DiabetesPedigreeFunction':
                 hint_frame = tk.Frame(field_frame, bg='#e7f3ff')
                 hint_frame.pack(fill=tk.X, padx=12, pady=(0, 8))
                 tk.Label(hint_frame,
-                       text="💡 Rentang 0.0-2.5 (0=tidak ada riwayat, >1.0=riwayat kuat diabetes keluarga)",
-                       font=('Arial', 8),
-                       fg='#004085',
-                       bg='#e7f3ff').pack(anchor='w', padx=6, pady=3)
-                       
+                         text="Rentang 0.0-2.5 (0=tidak ada riwayat, >1.0=riwayat kuat diabetes keluarga)",
+                         font=('Arial', 8),
+                         fg='#004085',
+                         bg='#e7f3ff').pack(anchor='w', padx=6, pady=3)
+                    
     def train_model_thread(self):
         if self.dataset is None:
-            messagebox.showerror("Error", "Pilih dataset terlebih dahulu")
+            messagebox.showerror("Error", "Butuh Dataset")
             return
         
         self.status_label.config(text="Training model...", fg='#ff6b35')
         self.train_button.config(state='disabled')
+
+
+        # PROSES TRAINING MODEL DI THREAD TERPISAH ( di bagian ini dimana dimulainya proses training model )
         
+        # Menjalankan proses training di thread terpisah agar UI tidak hang
         thread = threading.Thread(target=self.train_model)
         thread.start()
         
     def train_model(self):
         try:
+            # BAGIAN PRA-PROSES DATA: GANTI NILAI 0 DENGAN MEDIAN KOLOM
             zero_columns = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
             for col in zero_columns:
                 if col in self.dataset.columns:
+                    # Hitung median hanya dari nilai yang bukan 0
                     median_value = self.dataset[col][self.dataset[col] != 0].median()
+                    # Ganti nilai 0 dengan median
                     self.dataset[col] = self.dataset[col].replace(0, median_value)
             
+            # Pisahkan fitur (X) dan label/target (y)
             X = self.dataset[self.feature_columns]
             y = self.dataset['Outcome']
             
+            #  BAGIAN SPLIT DATA TRAINING & TESTING 
+            # (train_test_split): membagi data menjadi data latih dan data uji
             X_train, X_test, y_train, y_test = train_test_split(
-                X, y, test_size=0.3, random_state=42, stratify=y
+                    # pemabagian 80% training dan 20% testing
+                X, y, test_size=0.2, random_state=42, stratify=y
             )
             
+            #  BAGIAN NORMALISASI FITUR DENGAN STANDARDSCALER 
+            # StandardScaler: menskalakan fitur ke median=0 dan standar=1
             self.scaler = StandardScaler()
-            X_train_scaled = self.scaler.fit_transform(X_train)
-            X_test_scaled = self.scaler.transform(X_test)
+            X_train_scaled = self.scaler.fit_transform(X_train)  # fit di data training
+            X_test_scaled = self.scaler.transform(X_test)        # transform data testing dengan scaler yang sama
             
-            param_grid = {'n_neighbors': range(3, 31, 2)}
-            knn = KNeighborsClassifier()
-            grid_search = GridSearchCV(knn, param_grid, cv=5, scoring='accuracy', n_jobs=-1)
+            #  BAGIAN PENCARIAN K OPTIMAL (GRIDSEARCHCV UNTUK KNN) 
+            param_grid = {'n_neighbors': range(3, 31, 2)}  # coba K ganjil 3,5,...,29
+            knn = KNeighborsClassifier()                   # inisialisasi model KNN
+            grid_search = GridSearchCV(
+                knn,
+                param_grid,
+                cv=5,
+                scoring='accuracy',
+                n_jobs=-1
+            )
+            # Proses cross-validation untuk mencari kombinasi K terbaik
             grid_search.fit(X_train_scaled, y_train)
             
+            # Simpan nilai K terbaik dan skor CV terbaik
             self.k_optimal = grid_search.best_params_['n_neighbors']
             self.best_cv_score = grid_search.best_score_
             
+            #  BAGIAN TRAINING MODEL KNN DENGAN K TERBAIK 
             self.model = KNeighborsClassifier(n_neighbors=self.k_optimal)
+            # fit(): proses training KNN pada data training yang sudah distandarisasi
             self.model.fit(X_train_scaled, y_train)
             
+            #  BAGIAN TESTING / EVALUASI MODEL KNN 
+            # predict(): menghasilkan label prediksi untuk data uji
             y_pred = self.model.predict(X_test_scaled)
             
+            # Hitung metrik evaluasi (akurasi, precision, recall, f1-score)
             self.accuracy = accuracy_score(y_test, y_pred)
             self.precision = precision_score(y_test, y_pred)
             self.recall = recall_score(y_test, y_pred)
             self.f1 = f1_score(y_test, y_pred)
             
+            # Confusion matrix untuk mendapatkan TP, TN, FP, FN
             cm = confusion_matrix(y_test, y_pred)
+            self.cm = cm  # fungsi untuk menyimpan confusion matrix
             self.tn, self.fp, self.fn, self.tp = cm.ravel()
             
             self.model_trained = True
             
             self.root.after(0, self.on_training_complete)
-            
+        
+        # fungsi jika terjadi error selama training
         except Exception as e:
             self.root.after(0, lambda: self.on_training_error(str(e)))
-            
+         
+    # info setelah training selesai
     def on_training_complete(self):
         self.status_label.config(text=f"Model berhasil (Akurasi: {self.accuracy:.1%})", fg='#28a745')
         self.train_button.config(state='normal')
         self.predict_button.config(state='normal')
         self.reset_button.config(state='normal')
+        self.cm_button.config(state='normal')
         
         self.show_model_info()
         
@@ -481,6 +543,7 @@ class SistemPrediksiDiabetes:
             info_grid = tk.Frame(self.model_info_frame, bg='#e8f4fd')
             info_grid.pack(pady=(0, 8))
             
+            # fungsi untuk menampilkan info model
             metrics = [
                 ("K-Optimal", f"{self.k_optimal}"),
                 ("Accuracy", f"{self.accuracy:.1%}"),
@@ -507,7 +570,7 @@ class SistemPrediksiDiabetes:
                        text=value,
                        font=('Arial', 8, 'bold'),
                        bg='#e8f4fd').pack(side=tk.LEFT, padx=(4, 0))
-                       
+                        
     def predict(self):
         if not self.model_trained:
             messagebox.showerror("Error", "Model belum ditraining. Silakan training model terlebih dahulu.")
@@ -523,10 +586,15 @@ class SistemPrediksiDiabetes:
                     return
                 input_data[column] = float(value)
             
+            # Buat DataFrame 1 baris dari input user
             df_input = pd.DataFrame([input_data])
+            #  SCALING DATA INPUT DENGAN SCALER YANG SAMA DARI TRAINING 
             X_scaled = self.scaler.transform(df_input)
             
+            #  EKSEKUSI KNN UNTUK PREDIKSI SATU PASIEN 
+            # predict() -> kelas 0/1 (tidak berisiko / berisiko)
             prediction = self.model.predict(X_scaled)[0]
+            # predict_proba() -> probabilitas masing-masing kelas [P(0), P(1)]
             probability = self.model.predict_proba(X_scaled)[0]
             
             self.display_prediction_result(input_data, prediction, probability)
@@ -559,6 +627,8 @@ class SistemPrediksiDiabetes:
         self.result_display.insert(tk.END, "HASIL PREDIKSI:\n")
         self.result_display.insert(tk.END, "-"*65 + "\n\n")
         
+        #  PERHITUNGAN PROBABILITAS RISIKO DARI OUTPUT KNN 
+        # probability[1] = probabilitas kelas "berisiko" (Outcome=1)
         risk_prob = probability[1] * 100
         
         if prediction == 1:
@@ -572,13 +642,15 @@ class SistemPrediksiDiabetes:
         self.result_display.insert(tk.END, f"• Tidak Berisiko : {probability[0]*100:>6.2f}%\n")
         self.result_display.insert(tk.END, f"• Berisiko       : {probability[1]*100:>6.2f}%\n\n")
         
+        #  VISUALISASI BAR RISIKO BERBASIS PERSENTASE 
         bar_length = 50
-        filled = int(risk_prob / 2)
+        filled = int(risk_prob / 2)  # 100% -> 50 blok penuh
         bar = "█" * filled + "░" * (bar_length - filled)
         
         self.result_display.insert(tk.END, "VISUALISASI RISIKO:\n")
         self.result_display.insert(tk.END, f"[{bar}] {risk_prob:.1f}%\n\n")
         
+        #  LOGIKA KATEGORI RISIKO BERDASARKAN PERSEN 
         self.result_display.insert(tk.END, "KATEGORI RISIKO:\n")
         
         if risk_prob >= 75:
@@ -600,6 +672,7 @@ class SistemPrediksiDiabetes:
         self.result_display.insert(tk.END, "INTERPRETASI & REKOMENDASI:\n")
         self.result_display.insert(tk.END, "-"*65 + "\n\n")
         
+        # Rekomendasi berbasis kategori risiko
         if risk_prob >= 75:
             interpretasi = """RISIKO SANGAT TINGGI:
 • Segera konsultasi dengan dokter spesialis
@@ -631,6 +704,7 @@ class SistemPrediksiDiabetes:
         self.result_display.insert(tk.END, "FAKTOR RISIKO PERLU DIPERHATIKAN:\n")
         self.result_display.insert(tk.END, "-"*65 + "\n")
         
+        #  LOGIKA CEK FAKTOR RISIKO BERDASARKAN NILAI INPUT 
         warnings = []
         if 'BMI' in input_data and input_data['BMI'] > 25:
             warnings.append("• BMI tinggi - pertimbangkan penurunan berat badan")
@@ -674,6 +748,8 @@ class SistemPrediksiDiabetes:
         
         self.result_display.insert(tk.END, "="*65 + "\n")
         
+
+    # fungsi untuk mereset form input
     def reset_form(self):
         for entry in self.entries.values():
             entry.delete(0, tk.END)
@@ -682,11 +758,105 @@ class SistemPrediksiDiabetes:
             self.entries['Pregnancies'].insert(0, "0")
         
         self.show_welcome_message()
+    
+    def show_confusion_matrix(self):
+        if not self.model_trained or not hasattr(self, 'cm'):
+            messagebox.showerror("Error", "Model belum ditraining. Silakan training model terlebih dahulu.")
+            return
+        
+        # bagian untuk menampilkan confusion matrix
+        cm_window = tk.Toplevel(self.root)
+        cm_window.title("Confusion Matrix - Hasil Evaluasi Model")
+        cm_window.geometry("700x600")
+        cm_window.configure(bg='white')
+        
+        header_frame = tk.Frame(cm_window, bg='#1e5f8e', height=60)
+        header_frame.pack(fill=tk.X)
+        header_frame.pack_propagate(False)
+        
+        tk.Label(header_frame,
+                text="CONFUSION MATRIX",
+                font=('Arial', 18, 'bold'),
+                fg='white',
+                bg='#1e5f8e').pack(pady=18)
+        
+        # Frame untuk matplotlib
+        plot_frame = tk.Frame(cm_window, bg='white')
+        plot_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        
+        # Buat figure matplotlib
+        fig, ax = plt.subplots(figsize=(7, 6))
+        
+        # Buat annotasi dengan label TN, TP, FN, FP untuk setiap sel
+        # Format: [baris, kolom] = [aktual, prediksi]
+        # [0,0] = TN, [0,1] = FP, [1,0] = FN, [1,1] = TP
+        annot_labels = [
+            [f'True Negative \n( Tidak Diabetes )\n{self.tn}', f'False Positive \n ( Diabetes )\n{self.fp}'],
+            [f'False Negative \n ( Tidak Diabetes )\n{self.fn}', f'True Positive \n ( Diabetes )\n{self.tp}']
+        ]
+        
+        # Visualisasi confusion matrix dengan seaborn
+        sns.heatmap(self.cm, annot=annot_labels, fmt='', cmap='Blues', 
+                #    xticklabels=['Tidak Diabetes', 'Diabetes'],
+                #    yticklabels=['Tidak Diabetes', 'Diabetes'],
+                   ax=ax, cbar_kws={'label': 'Jumlah'})
+        
+        ax.set_xlabel('Prediksi', fontsize=12, fontweight='bold')
+        ax.set_ylabel('Aktual', fontsize=12, fontweight='bold')
+        ax.set_title('Confusion Matrix - Model KNN', fontsize=14, fontweight='bold', pad=15)
+        
+        plt.tight_layout()
+        
+        # Embed matplotlib figure ke tkinter
+        canvas = FigureCanvasTkAgg(fig, plot_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        
+        # Frame untuk informasi detail
+        info_frame = tk.Frame(cm_window, bg='#f8f9fa', relief=tk.FLAT)
+        info_frame.pack(fill=tk.X, padx=20, pady=(0, 20))
+        
+        # Informasi detail confusion matrix
+        info_text = f"""
+        True Negative (TN): {self.tn}    |    False Positive (FP): {self.fp}
+        False Negative (FN): {self.fn}   |    True Positive (TP): {self.tp}
+        
+        Akurasi: {self.accuracy:.2%}    |    Precision: {self.precision:.2%}
+        Recall: {self.recall:.2%}       |    F1-Score: {self.f1:.2%}
+        """
+        
+        tk.Label(info_frame,
+                text=info_text,
+                font=('Consolas', 9),
+                bg='#f8f9fa',
+                justify=tk.LEFT,
+                anchor='w').pack(padx=15, pady=10)
+        
+        # bagian tambahan untuk penjelasan
+        explanation_frame = tk.Frame(cm_window, bg='white')
+        explanation_frame.pack(fill=tk.X, padx=20, pady=(0, 20))
+        
+        explanation = """
+        Keterangan:
+        • True Negative (TN): Benar memprediksi tidak diabetes
+        • False Positive (FP): Salah memprediksi diabetes (padahal tidak)
+        • False Negative (FN): Salah memprediksi tidak diabetes (padahal diabetes)
+        • True Positive (TP): Benar memprediksi diabetes
+        """
+        
+        tk.Label(explanation_frame,
+                text=explanation,
+                font=('Arial', 8),
+                bg='white',
+                fg='#666',
+                justify=tk.LEFT,
+                anchor='w').pack(padx=10)
         
 def main():
     root = tk.Tk()
     app = SistemPrediksiDiabetes(root)
     root.mainloop()
+
 
 if __name__ == "__main__":
     main()
