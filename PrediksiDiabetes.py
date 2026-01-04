@@ -395,7 +395,7 @@ class SistemPrediksiDiabetes:
                 hint_frame = tk.Frame(field_frame, bg='#e7f3ff')
                 hint_frame.pack(fill=tk.X, padx=12, pady=(0, 8))
                 tk.Label(hint_frame,
-                         text="Diukur di trisep (lengan atas belakang) menggunakan kaliper( Cukup di isi 29 jika tidak tahu )",
+                         text="Diukur di trisep menggunakan alat kaliper( Cukup di isi 29 jika tidak tahu )",
                          font=('Arial', 8),
                          fg='#004085',
                          bg='#e7f3ff').pack(anchor='w', padx=6, pady=3)
@@ -441,8 +441,8 @@ class SistemPrediksiDiabetes:
             #  BAGIAN SPLIT DATA TRAINING & TESTING 
             # (train_test_split): membagi data menjadi data latih dan data uji
             X_train, X_test, y_train, y_test = train_test_split(
-                    # pemabagian 80% training dan 20% testing
-                X, y, test_size=0.2, random_state=42, stratify=y
+                    # pemabagian 70% training dan 30% testing
+                X, y, test_size=0.3, random_state=42, stratify=y
             )
             
             #  BAGIAN NORMALISASI FITUR DENGAN STANDARDSCALER 
