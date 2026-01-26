@@ -446,7 +446,7 @@ class SistemPrediksiDiabetes:
             )
             
             #  BAGIAN NORMALISASI FITUR DENGAN STANDARDSCALER 
-            # StandardScaler: menskalakan fitur ke median=0 dan standar=1
+            # StandardScaler: menskalakan fitur ke mean=0 dan standar=1
             self.scaler = StandardScaler()
             X_train_scaled = self.scaler.fit_transform(X_train)  # fit di data training
             X_test_scaled = self.scaler.transform(X_test)        # transform data testing dengan scaler yang sama
@@ -628,7 +628,7 @@ class SistemPrediksiDiabetes:
         self.result_display.insert(tk.END, "-"*65 + "\n\n")
         
         #  PERHITUNGAN PROBABILITAS RISIKO DARI OUTPUT KNN 
-        # probability[1] = probabilitas kelas "berisiko" (Outcome=1)
+        # probability[1] = probabilitas kelas "berisiko" (Outcome=1 / true)
         risk_prob = probability[1] * 100
         
         if prediction == 1:
