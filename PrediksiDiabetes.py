@@ -442,7 +442,7 @@ class SistemPrediksiDiabetes:
             # (train_test_split): membagi data menjadi data latih dan data uji
             X_train, X_test, y_train, y_test = train_test_split(
                     # pemabagian 70% training dan 30% testing
-                X, y, test_size=0.3, random_state=42, stratify=y
+                X, y, test_size=0.2, random_state=42, stratify=y
             )
             
             #  BAGIAN NORMALISASI FITUR DENGAN STANDARDSCALER 
