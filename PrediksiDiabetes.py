@@ -492,7 +492,7 @@ class SistemPrediksiDiabetes:
             
             self.root.after(0, self.on_training_complete)
         
-        # fungsi jika terjadi error selama training
+        #  jika terjadi error selama training
         except Exception as e:
             self.root.after(0, lambda: self.on_training_error(str(e)))
          
